@@ -1,5 +1,4 @@
 class Expense:
-
     def __init__(
         self,
         expense_id,
