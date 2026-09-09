@@ -1,1 +1,4 @@
 id,date,category,description,amount,payment_method
+3,09-09-2026,Travel,Amritsar,700,Cash
+5,09-09-2026,Shopping,Pant,800.00,Credit Card
+6,09-09-2026,Travel,Jalandhar,500.00,UPI

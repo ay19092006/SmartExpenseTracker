@@ -1,18 +1,23 @@
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from datetime import datetime
+
 from database import ExpenseDatabase
 
+
 class SmartExpenseTracker:
+
     def __init__(self, root):
         self.root = root
         self.root.title("Smart Expense Tracker")
-        self.root.geometry("1200x720")
+        self.root.geometry("1150x750")
         self.root.minsize(1000, 650)
-        self.root.configure(bg="#f4f6f8")
-        self.database = ExpenseDatabase()
+
+        self.db = ExpenseDatabase()
+
+        # Stores the ID of the currently selected expense
         self.selected_id = None
+
         self.create_styles()
         self.create_header()
         self.create_form()
@@ -20,7 +25,12 @@ class SmartExpenseTracker:
         self.create_search_section()
         self.create_table()
         self.create_summary()
+
         self.load_expenses()
+
+    # ---------------------------------------------------------
+    # STYLES
+    # ---------------------------------------------------------
 
     def create_styles(self):
         style = ttk.Style()
@@ -31,86 +41,93 @@ class SmartExpenseTracker:
             pass
 
         style.configure(
-            "Treeview",
-            font=("Helvetica", 12),
-            rowheight=32,
+            "Title.TLabel",
+            font=("Arial", 24, "bold")
+        )
+
+        style.configure(
+            "Subtitle.TLabel",
+            font=("Arial", 11)
+        )
+
+        style.configure(
+            "TButton",
+            font=("Arial", 10, "bold"),
+            padding=8
         )
 
         style.configure(
             "Treeview.Heading",
-            font=("Helvetica", 12, "bold")
+            font=("Arial", 10, "bold")
         )
 
         style.configure(
-            "TCombobox",
-            padding=5
+            "Treeview",
+            font=("Arial", 10),
+            rowheight=28
         )
+
+    # ---------------------------------------------------------
+    # HEADER
+    # ---------------------------------------------------------
 
     def create_header(self):
-        header = tk.Frame(
-            self.root,
-            bg="#263238",
-            height=80
-        )
-        header.pack(fill="x")
 
-        title = tk.Label(
-            header,
+        header_frame = ttk.Frame(self.root)
+        header_frame.pack(fill="x", padx=20, pady=(15, 5))
+
+        title = ttk.Label(
+            header_frame,
             text="Smart Expense Tracker",
-            font=("Helvetica", 24, "bold"),
-            fg="white",
-            bg="#263238"
+            style="Title.TLabel"
         )
-        title.pack(pady=(15,0))
+        title.pack()
 
-        subtitle = tk.Label(
-            header,
-            text="Track your expenses and manage your budget effectively",
-            font=("Helvetica", 10),
-            fg="#cfd8dc",
-            bg="#263238"
+        subtitle = ttk.Label(
+            header_frame,
+            text="Manage your daily expenses easily",
+            style="Subtitle.TLabel"
         )
-        subtitle.pack()
+        subtitle.pack(pady=(2, 10))
+
+    # ---------------------------------------------------------
+    # FORM
+    # ---------------------------------------------------------
 
     def create_form(self):
-        form_frame = tk.LabelFrame(
+
+        form_frame = ttk.LabelFrame(
             self.root,
             text="Expense Details",
-            font=("Helvetica", 11, "bold"),
-            bg="#f4f6f8",
-            padx=10,
-            pady=10
+            padding=15
         )
         form_frame.pack(
             fill="x",
-            padx=15,
+            padx=20,
             pady=10
         )
 
-        #Date
-        tk.Label(
+        # DATE
+        ttk.Label(
             form_frame,
-            text="Date (YYYY-MM-DD):",
-            font=("Helvetica", 10),
-            bg="#f4f6f8"
+            text="Date (DD-MM-YYYY)"
         ).grid(
             row=0,
             column=0,
-            padx=5,
-            pady=5,
+            padx=10,
+            pady=8,
             sticky="w"
         )
 
-        self.date_entry = tk.Entry(
+        self.date_entry = ttk.Entry(
             form_frame,
-            width=18,
-            font=("Helvetica", 10)
+            width=25
         )
         self.date_entry.grid(
             row=0,
             column=1,
-            padx=5,
-            pady=5
+            padx=10,
+            pady=8
         )
 
         self.date_entry.insert(
@@ -118,21 +135,19 @@ class SmartExpenseTracker:
             datetime.now().strftime("%d-%m-%Y")
         )
 
-        #Category
-        tk.Label(
+        # CATEGORY
+        ttk.Label(
             form_frame,
-            text="Category:",
-            font=("Helvetica", 10),
-            bg="#f4f6f8"
+            text="Category"
         ).grid(
             row=0,
             column=2,
-            padx=5,
-            pady=5,
+            padx=10,
+            pady=8,
             sticky="w"
         )
 
-        self.category_combobox = ttk.Combobox(
+        self.category_combo = ttk.Combobox(
             form_frame,
             values=[
                 "Food",
@@ -144,79 +159,74 @@ class SmartExpenseTracker:
                 "Health",
                 "Other"
             ],
-            width=16,
-            state="readonly"
+            state="readonly",
+            width=22
         )
-        self.category_combobox.grid(
+
+        self.category_combo.grid(
             row=0,
             column=3,
-            padx=5,
-            pady=5
+            padx=10,
+            pady=8
         )
 
-        #Description
-        tk.Label(
+        # DESCRIPTION
+        ttk.Label(
             form_frame,
-            text="Description:",
-            font=("Helvetica", 10),
-            bg="#f4f6f8"
-        ).grid(
-            row=0,
-            column=4,
-            padx=5,
-            pady=5,
-            sticky="w"
-        )
-
-        self.description_entry = tk.Entry(
-            form_frame,
-            width=25,
-            font=("Helvetica", 10)
-        )
-        self.description_entry.grid(
-            row=0,
-            column=5,
-            padx=5,
-            pady=5
-        )
-
-        #Amount
-        tk.Label(
-            form_frame,
-            text="Amount (₹):",
-            font=("Helvetica", 10),
-            bg="#f4f6f8"
+            text="Description"
         ).grid(
             row=1,
             column=0,
-            padx=5,
-            pady=5,
+            padx=10,
+            pady=8,
             sticky="w"
         )
 
-        self.amount_entry = tk.Entry(
+        self.description_entry = ttk.Entry(
             form_frame,
-            width=18,
-            font=("Helvetica", 10)
-        )
-        self.amount_entry.grid(
-            row=1,
-            column=1,
-            padx=5,
-            pady=5
+            width=25
         )
 
-        #Payment
-        tk.Label(
+        self.description_entry.grid(
+            row=1,
+            column=1,
+            padx=10,
+            pady=8
+        )
+
+        # AMOUNT
+        ttk.Label(
             form_frame,
-            text="Payment Method:",
-            font=("Helvetica", 10),
-            bg="#f4f6f8"
+            text="Amount"
         ).grid(
             row=1,
             column=2,
-            padx=5,
-            pady=5,
+            padx=10,
+            pady=8,
+            sticky="w"
+        )
+
+        self.amount_entry = ttk.Entry(
+            form_frame,
+            width=25
+        )
+
+        self.amount_entry.grid(
+            row=1,
+            column=3,
+            padx=10,
+            pady=8
+        )
+
+        # PAYMENT METHOD
+        ttk.Label(
+            form_frame,
+            text="Payment Method"
+        ).grid(
+            row=2,
+            column=0,
+            padx=10,
+            pady=8,
             sticky="w"
         )
 
@@ -224,128 +234,101 @@ class SmartExpenseTracker:
             form_frame,
             values=[
                 "Cash",
+                "UPI",
                 "Credit Card",
                 "Debit Card",
-                "UPI",
-                "Net Banking"
+                "Bank Transfer"
             ],
-            width=16,
-            state="readonly"
+            state="readonly",
+            width=22
         )
+
         self.payment_combo.grid(
-            row=1,
-            column=3,
-            padx=5,
-            pady=5
-        )
-
-    def create_buttons(self):
-        button_frame = tk.Frame(
-            self.root,
-            bg="#f4f6f8"
-        )
-        button_frame.pack(
-            fill="x",
-            padx=15,
-            pady=5
-        )
-
-        self.add_button = tk.Button(
-            button_frame,
-            text="Add Expense",
-            width=15,
-            cursor="hand2",
-            font=("Helvetica", 10, "bold"),
-            bg="#2e7d32",
-            fg="white",
-            command=self.add_expense
-        )
-
-        self.add_button.pack(
-            side="left",
-            padx=5
-        )
-
-        self.update_button = tk.Button(
-            button_frame,
-            text="Update Expense",
-            width=15,
-            cursor="hand2",
-            font=("Helvetica", 10, "bold"),
-            bg="#1565c0",
-            fg="white",
-            command=self.update_expense
-        )
-
-        self.update_button.pack(
-            side="left",
-            padx=5
-        )
-
-        self.delete_button = tk.Button(
-            button_frame,
-            text="Delete Expense",
-            width=15,
-            cursor="hand2",
-            font=("Helvetica", 10, "bold"),
-            bg="#c62828",
-            fg="white",
-            command=self.delete_expense
-        )
-
-        self.delete_button.pack(
-            side="left",
-            padx=5
-        )
-
-        self.clear_button = tk.Button(
-            button_frame,
-            text="Clear",
-            width=15,
-            cursor="hand2",
-            font=("Helvetica", 10, "bold"),
-            bg="#546e7a",
-            fg="white",
-            command=self.clear_form
-        )
-
-        self.clear_button.pack(
-            side="left",
-            padx=5
-        )
-
-        self.chart_button = tk.Button(
-            button_frame,
-            text="View Chart",
-            width=15,
-            command=self.show_chart,
-            bg="#6a1b9a",
-            fg="white",
-            font=("Arial", 10, "bold"),
-            cursor="hand2"
-        )
-
-        self.chart_button.pack(
-            side="left",
-            padx=5
-        )
-
-    def create_search_section(self):
-        search_frame = tk.Frame(
-            self.root,
-            bg="#f4f6f8"
-        )
-        search_frame.pack(
-            fill="x",
-            padx=15,
+            row=2,
+            column=1,
+            padx=10,
             pady=8
         )
 
-        tk.Label(
+    # ---------------------------------------------------------
+    # BUTTONS
+    # ---------------------------------------------------------
+
+    def create_buttons(self):
+
+        button_frame = ttk.Frame(self.root)
+        button_frame.pack(
+            fill="x",
+            padx=20,
+            pady=5
+        )
+
+        ttk.Button(
+            button_frame,
+            text="Add Expense",
+            command=self.add_expense
+        ).pack(
+            side="left",
+            padx=5
+        )
+
+        ttk.Button(
+            button_frame,
+            text="Update Expense",
+            command=self.update_expense
+        ).pack(
+            side="left",
+            padx=5
+        )
+
+        ttk.Button(
+            button_frame,
+            text="Delete Expense",
+            command=self.delete_expense
+        ).pack(
+            side="left",
+            padx=5
+        )
+
+        ttk.Button(
+            button_frame,
+            text="Clear",
+            command=self.clear_form
+        ).pack(
+            side="left",
+            padx=5
+        )
+
+        ttk.Button(
+            button_frame,
+            text="View Chart",
+            command=self.show_chart
+        ).pack(
+            side="right",
+            padx=5
+        )
+
+    # ---------------------------------------------------------
+    # SEARCH SECTION
+    # ---------------------------------------------------------
+
+    def create_search_section(self):
+
+        search_frame = ttk.LabelFrame(
+            self.root,
+            text="Search / Filter",
+            padding=10
+        )
+
+        search_frame.pack(
+            fill="x",
+            padx=20,
+            pady=10
+        )
+
+        ttk.Label(
             search_frame,
-            text="Search:",
-            font=("Helvetica", 10),
-            bg="#f4f6f8"
+            text="Search:"
         ).pack(
             side="left",
             padx=5
@@ -353,23 +336,22 @@ class SmartExpenseTracker:
 
         self.search_entry = ttk.Entry(
             search_frame,
-            width=30,
-            font=("Helvetica", 10)
+            width=30
         )
+
         self.search_entry.pack(
             side="left",
             padx=5
         )
+
         self.search_entry.bind(
             "<KeyRelease>",
-            self.search_expenses
+            lambda event: self.search_expenses()
         )
 
-        tk.Label(
+        ttk.Label(
             search_frame,
-            text="Category:",
-            font=("Helvetica", 10, "bold"),
-            bg="#f4f6f8"
+            text="Category:"
         ).pack(
             side="left",
             padx=(20, 5)
@@ -388,128 +370,110 @@ class SmartExpenseTracker:
                 "Health",
                 "Other"
             ],
-            width=15,
-            state="readonly"
+            state="readonly",
+            width=20
         )
-
-        self.filter_combo.set("All")
 
         self.filter_combo.pack(
             side="left",
             padx=5
         )
 
+        self.filter_combo.set("All")
+
         self.filter_combo.bind(
             "<<ComboboxSelected>>",
-            self.search_expenses
+            lambda event: self.search_expenses()
         )
+
+    # ---------------------------------------------------------
+    # TABLE
+    # ---------------------------------------------------------
 
     def create_table(self):
 
-        table_frame = tk.Frame(
-            self.root,
-            bg="#f4f6f8"
-        )
+        table_frame = ttk.Frame(self.root)
 
         table_frame.pack(
             fill="both",
             expand=True,
-            padx=15,
+            padx=20,
             pady=5
         )
 
         columns = (
-            "id",
-            "date",
-            "category",
-            "description",
-            "amount",
-            "payment"
+            "ID",
+            "Date",
+            "Category",
+            "Description",
+            "Amount",
+            "Payment Method"
         )
 
-        self.tree = ttk.Treeview(
+        self.table = ttk.Treeview(
             table_frame,
             columns=columns,
             show="headings",
-            selectmode="browse"
+            selectmode="browse",
+            height=8
         )
 
-        self.tree.heading(
-            "id",
-            text="ID"
-        )
+        # HEADINGS
+        for column in columns:
+            self.table.heading(
+                column,
+                text=column
+            )
 
-        self.tree.heading(
-            "date",
-            text="Date"
-        )
-
-        self.tree.heading(
-            "category",
-            text="Category"
-        )
-
-        self.tree.heading(
-            "description",
-            text="Description"
-        )
-
-        self.tree.heading(
-            "amount",
-            text="Amount (₹)"
-        )
-
-        self.tree.heading(
-            "payment",
-            text="Payment Method"
-        )
-
-        self.tree.column(
-            "id",
-            width=50,
+        # COLUMN WIDTHS
+        self.table.column(
+            "ID",
+            width=60,
             anchor="center"
         )
 
-        self.tree.column(
-            "date",
+        self.table.column(
+            "Date",
             width=110,
             anchor="center"
         )
 
-        self.tree.column(
-            "category",
+        self.table.column(
+            "Category",
             width=130,
             anchor="center"
         )
 
-        self.tree.column(
-            "description",
-            width=250
+        self.table.column(
+            "Description",
+            width=250,
+            anchor="w"
         )
 
-        self.tree.column(
-            "amount",
-            width=120,
-            anchor="e"
+        self.table.column(
+            "Amount",
+            width=110,
+            anchor="center"
         )
 
-        self.tree.column(
-            "payment",
+        self.table.column(
+            "Payment Method",
             width=150,
             anchor="center"
         )
 
+        # SCROLLBAR
         scrollbar = ttk.Scrollbar(
             table_frame,
             orient="vertical",
-            command=self.tree.yview
+            command=self.table.yview
         )
 
-        self.tree.configure(
+        self.table.configure(
             yscrollcommand=scrollbar.set
         )
 
-        self.tree.pack(
+        self.table.pack(
             side="left",
             fill="both",
             expand=True
@@ -520,92 +484,81 @@ class SmartExpenseTracker:
             fill="y"
         )
 
-        self.tree.bind(
-            "<<TreeviewSelect>>",
+        # WHEN USER SELECTS A ROW
+        self.table.bind(
+            "<ButtonRelease-1>",
             self.select_expense
         )
 
+    # ---------------------------------------------------------
+    # SUMMARY - BELOW TABLE
+    # ---------------------------------------------------------
+
     def create_summary(self):
+
         summary_frame = tk.Frame(
             self.root,
-            bg="#263238",
-            height=60
+            bg="#e8ecef",
+            height=55,
+            relief="solid",
+            bd=1
         )
+
         summary_frame.pack(
             fill="x",
-            padx=15,
+            padx=20,
             pady=(5, 15)
         )
+
+        summary_frame.pack_propagate(False)
 
         self.total_label = tk.Label(
             summary_frame,
             text="Total Expenses: ₹0.00",
             font=("Arial", 14, "bold"),
-            bg="#263238",
-            fg="white"
+            bg="#e8ecef",
+            fg="#263238"
         )
 
         self.total_label.pack(
             side="left",
-            padx=20,
-            pady=15
+            padx=15,
+            pady=10
         )
 
         self.count_label = tk.Label(
             summary_frame,
             text="Transactions: 0",
-            font=("Arial", 12),
-            bg="#263238",
-            fg="white"
+            font=("Arial", 12, "bold"),
+            bg="#e8ecef",
+            fg="#263238"
         )
 
         self.count_label.pack(
             side="right",
-            padx=20,
-            pady=15
+            padx=15,
+            pady=10
         )
 
+    # ---------------------------------------------------------
+    # VALIDATION
+    # ---------------------------------------------------------
+
     def validate_input(self):
+
         date = self.date_entry.get().strip()
         category = self.category_combo.get().strip()
         description = self.description_entry.get().strip()
         amount = self.amount_entry.get().strip()
         payment_method = self.payment_combo.get().strip()
 
+        # DATE
         if not date:
-            messagebox.showerror(
+            messagebox.showwarning(
                 "Validation Error",
-                "Please enter the date."
+                "Please enter a date."
             )
-            return None
-
-        if not category:
-            messagebox.showerror(
-                "Validation Error",
-                "Please select a category."
-            )
-            return None
-
-        if not description:
-            messagebox.showerror(
-                "Validation Error",
-                "Please enter a description."
-            )
-            return None
-
-        if not amount:
-            messagebox.showerror(
-                "Validation Error",
-                "Please enter the amount."
-            )
-            return None
-
-        if not payment_method:
-            messagebox.showerror(
-                "Validation Error",
-                "Please select a payment method."
-            )
-            return None
+            return False
 
         try:
             datetime.strptime(
@@ -613,93 +566,146 @@ class SmartExpenseTracker:
                 "%d-%m-%Y"
             )
         except ValueError:
-            messagebox.showerror(
+            messagebox.showwarning(
                 "Validation Error",
                 "Date must be in DD-MM-YYYY format."
             )
-            return None
+            return False
+
+        # CATEGORY
+        if not category:
+            messagebox.showwarning(
+                "Validation Error",
+                "Please select a category."
+            )
+            return False
+
+        # DESCRIPTION
+        if not description:
+            messagebox.showwarning(
+                "Validation Error",
+                "Please enter a description."
+            )
+            return False
+
+        # AMOUNT
+        if not amount:
+            messagebox.showwarning(
+                "Validation Error",
+                "Please enter an amount."
+            )
+            return False
 
         try:
             amount_value = float(amount)
+
+            if amount_value <= 0:
+                messagebox.showwarning(
+                    "Validation Error",
+                    "Amount must be greater than 0."
+                )
+                return False
+
         except ValueError:
-            messagebox.showerror(
+            messagebox.showwarning(
                 "Validation Error",
                 "Amount must be a valid number."
             )
-            return None
+            return False
 
-        if amount_value <= 0:
-            messagebox.showerror(
+        # PAYMENT METHOD
+        if not payment_method:
+            messagebox.showwarning(
                 "Validation Error",
-                "Amount must be greater than zero."
+                "Please select a payment method."
             )
-            return None
+            return False
 
-        return (
-            date,
-            category,
-            description,
-            amount_value,
-            payment_method
-        )
+        return True
+
+    # ---------------------------------------------------------
+    # ADD EXPENSE
+    # ---------------------------------------------------------
 
     def add_expense(self):
-        data = self.validate_input()
-        if data is None:
+
+        if not self.validate_input():
             return
 
+        date = self.date_entry.get().strip()
+        category = self.category_combo.get().strip()
+        description = self.description_entry.get().strip()
+        amount = self.amount_entry.get().strip()
+        payment_method = self.payment_combo.get().strip()
+
         try:
-            self.database.add_expense(
-                data[0],
-                data[1],
-                data[2],
-                data[3],
-                data[4]
+
+            self.db.add_expense(
+                date,
+                category,
+                description,
+                amount,
+                payment_method
             )
+
             messagebox.showinfo(
                 "Success",
                 "Expense added successfully."
             )
+
             self.clear_form()
             self.load_expenses()
+
         except Exception as e:
+
             messagebox.showerror(
                 "Error",
                 str(e)
             )
+
+    # ---------------------------------------------------------
+    # LOAD EXPENSES
+    # ---------------------------------------------------------
 
     def load_expenses(self):
+
         try:
-            expenses = self.database.get_all_expenses()
-            self.display_expenses(
-                expenses
-            )
+
+            expenses = self.db.get_all_expenses()
+
+            self.display_expenses(expenses)
+
         except Exception as e:
+
             messagebox.showerror(
                 "Error",
                 str(e)
             )
 
-    def display_expenses(
-        self,
-        expenses
-    ):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
+    # ---------------------------------------------------------
+    # DISPLAY EXPENSES
+    # ---------------------------------------------------------
+
+    def display_expenses(self, expenses):
+
+        # Remove old rows
+        for item in self.table.get_children():
+            self.table.delete(item)
+
         total = 0
 
         for expense in expenses:
+
             try:
-                amount = float(
-                    expense.amount
-                )
+                amount = float(expense.amount)
             except:
                 amount = 0
 
             total += amount
-            self.tree.insert(
+
+            self.table.insert(
                 "",
-                "end",
+                tk.END,
                 values=(
                     expense.expense_id,
                     expense.date,
@@ -710,281 +716,410 @@ class SmartExpenseTracker:
                 )
             )
 
+        # TOTAL EXPENSE
         self.total_label.config(
             text=f"Total Expenses: ₹{total:.2f}"
         )
 
+        # TRANSACTION COUNT
         self.count_label.config(
             text=f"Transactions: {len(expenses)}"
         )
 
-    def select_expense(self, event=None):
-        selected = self.tree.selection()
+    # ---------------------------------------------------------
+    # SELECT EXPENSE
+    # ---------------------------------------------------------
+
+    def select_expense(self, event):
+
+        selected = self.table.selection()
+
         if not selected:
             return
-        values = self.tree.item(
-            selected[0],
-            "values"
+
+        item = self.table.item(
+            selected[0]
         )
+
+        values = item["values"]
+
         if not values:
             return
 
+        # Store the selected expense ID
         self.selected_id = values[0]
+
+        # DATE
         self.date_entry.delete(
             0,
             tk.END
         )
+
         self.date_entry.insert(
             0,
             values[1]
         )
+
+        # CATEGORY
         self.category_combo.set(
             values[2]
         )
+
+        # DESCRIPTION
         self.description_entry.delete(
             0,
             tk.END
         )
+
         self.description_entry.insert(
             0,
             values[3]
         )
+
+        # AMOUNT
         self.amount_entry.delete(
             0,
             tk.END
         )
+
         self.amount_entry.insert(
             0,
             values[4]
         )
+
+        # PAYMENT METHOD
         self.payment_combo.set(
             values[5]
         )
 
+    # ---------------------------------------------------------
+    # UPDATE EXPENSE
+    # ---------------------------------------------------------
+
     def update_expense(self):
+
         if self.selected_id is None:
+
             messagebox.showwarning(
-                "Warning",
-                "Please select an expense to update."
+                "No Selection",
+                "Please select an expense from the table first."
             )
+
             return
 
-        data = self.validate_input()
-        if data is None:
+        if not self.validate_input():
             return
+
+        date = self.date_entry.get().strip()
+        category = self.category_combo.get().strip()
+        description = self.description_entry.get().strip()
+        amount = self.amount_entry.get().strip()
+        payment_method = self.payment_combo.get().strip()
+
         try:
-            result = self.database.update_expense(
+
+            updated = self.db.update_expense(
                 self.selected_id,
-                data[0],
-                data[1],
-                data[2],
-                data[3],
-                data[4]
+                date,
+                category,
+                description,
+                amount,
+                payment_method
             )
-            if result:
-                messagebox.showinfo(
-                    "Success",
-                    "Expense updated successfully."
-                )
-                self.clear_form()
-                self.load_expenses()
-            else:
+
+            # Only False means the expense was actually not found
+            if updated is False:
+
                 messagebox.showerror(
                     "Error",
                     "Expense not found."
                 )
+
+                return
+
+            self.selected_id = None
+
+            self.clear_form()
+
+            self.load_expenses()
+
+            messagebox.showinfo(
+                "Success",
+                "Expense updated successfully."
+            )
+
         except Exception as e:
+
             messagebox.showerror(
                 "Error",
                 str(e)
             )
 
+    # ---------------------------------------------------------
+    # DELETE EXPENSE
+    # ---------------------------------------------------------
+
     def delete_expense(self):
+
         if self.selected_id is None:
+
             messagebox.showwarning(
-                "Warning",
-                "Please select an expense to delete."
+                "No Selection",
+                "Please select an expense from the table first."
             )
+
             return
-        answer = messagebox.askyesno(
+
+        confirm = messagebox.askyesno(
             "Confirm Delete",
             "Are you sure you want to delete this expense?"
         )
-        if not answer:
+
+        if not confirm:
             return
+
         try:
-            result = self.database.delete_expense(
+
+            deleted = self.db.delete_expense(
                 self.selected_id
             )
-            if result:
+
+            if deleted:
+
                 messagebox.showinfo(
                     "Success",
                     "Expense deleted successfully."
                 )
+
+                self.selected_id = None
+
                 self.clear_form()
+
                 self.load_expenses()
+
             else:
+
                 messagebox.showerror(
                     "Error",
-                    "Expense not found."
+                    "No expense found."
                 )
+
         except Exception as e:
+
             messagebox.showerror(
                 "Error",
                 str(e)
             )
 
+    # ---------------------------------------------------------
+    # CLEAR FORM
+    # ---------------------------------------------------------
+
     def clear_form(self):
+
         self.selected_id = None
+
         self.date_entry.delete(
             0,
             tk.END
         )
+
         self.date_entry.insert(
             0,
             datetime.now().strftime("%d-%m-%Y")
         )
+
         self.category_combo.set("")
+
         self.description_entry.delete(
             0,
             tk.END
         )
+
         self.amount_entry.delete(
             0,
             tk.END
         )
-        self.payment_combo.set("")
-        for item in self.tree.selection():
-            self.tree.selection_remove(
-                item
-            )
 
-    def search_expenses(self, event=None):
+        self.payment_combo.set("")
+
+        # Clear table selection
+        for item in self.table.selection():
+            self.table.selection_remove(item)
+
+    # ---------------------------------------------------------
+    # SEARCH / FILTER
+    # ---------------------------------------------------------
+
+    def search_expenses(self):
+
         search_text = (
             self.search_entry
             .get()
             .strip()
             .lower()
         )
-        category_filter = (
+
+        selected_category = (
             self.filter_combo
             .get()
+            .strip()
         )
+
         try:
-            expenses = (
-                self.database
-                .get_all_expenses()
-            )
-            filtered = []
-            for expense in expenses:
+
+            all_expenses = self.db.get_all_expenses()
+
+            filtered_expenses = []
+
+            for expense in all_expenses:
+
+                # CATEGORY FILTER
                 category_match = (
-                    category_filter == "All"
-                    or expense.category
-                    == category_filter
+                    selected_category == "All"
+                    or expense.category == selected_category
                 )
+
+                if not category_match:
+                    continue
+
+                # SEARCH
                 search_match = (
-                    search_text in
-                    expense.description.lower()
+                    search_text in str(
+                        expense.description
+                    ).lower()
                     or
-                    search_text in
-                    expense.category.lower()
+                    search_text in str(
+                        expense.category
+                    ).lower()
                     or
-                    search_text in
-                    expense.date.lower()
+                    search_text in str(
+                        expense.date
+                    ).lower()
                     or
-                    search_text in
-                    expense.payment_method.lower()
+                    search_text in str(
+                        expense.payment_method
+                    ).lower()
                 )
-                if (
-                    category_match
-                    and search_match
-                ):
-                    filtered.append(
+
+                if search_match:
+                    filtered_expenses.append(
                         expense
                     )
+
             self.display_expenses(
-                filtered
+                filtered_expenses
             )
+
         except Exception as e:
+
             messagebox.showerror(
                 "Error",
                 str(e)
             )
 
-    def show_chart(self):
-        try:
-            expenses = (
-                self.database
-                .get_all_expenses()
-            )
-            if not expenses:
-                messagebox.showinfo(
-                    "No Data",
-                    "There are no expenses to display."
-                )
-                return
-            category_totals = {}
-            for expense in expenses:
-                category = (
-                    expense.category
-                )
-                amount = float(
-                    expense.amount
-                )
-                if category not in category_totals:
-                    category_totals[
-                        category
-                    ] = 0
-                category_totals[
-                    category
-                ] += amount
+    # ---------------------------------------------------------
+    # CHART
+    # ---------------------------------------------------------
 
-            try:
-                import matplotlib.pyplot as plt
-            except ImportError:
-                messagebox.showerror(
-                    "Matplotlib Missing",
-                    "Please install matplotlib using:\n\npip install matplotlib"
+    def show_chart(self):
+
+        try:
+
+            import matplotlib.pyplot as plt
+
+            expenses = self.db.get_all_expenses()
+
+            if not expenses:
+
+                messagebox.showwarning(
+                    "No Data",
+                    "There are no expenses available for the chart."
                 )
+
                 return
+
+            category_totals = {}
+
+            for expense in expenses:
+
+                category = expense.category
+
+                try:
+                    amount = float(
+                        expense.amount
+                    )
+                except:
+                    amount = 0
+
+                if category not in category_totals:
+                    category_totals[category] = 0
+
+                category_totals[category] += amount
 
             categories = list(
                 category_totals.keys()
             )
+
             amounts = list(
                 category_totals.values()
             )
+
             plt.figure(
-                figsize=(9, 6)
+                figsize=(9, 5)
             )
+
             plt.bar(
                 categories,
                 amounts
             )
+
             plt.title(
                 "Expenses by Category"
             )
+
             plt.xlabel(
                 "Category"
             )
+
             plt.ylabel(
                 "Amount (₹)"
             )
+
             plt.xticks(
                 rotation=30
             )
+
             plt.tight_layout()
+
             plt.show()
-        except Exception as e:
+
+        except ImportError:
+
             messagebox.showerror(
-                "Chart Error",
+                "Matplotlib Missing",
+                "Please install matplotlib using:\n\n"
+                "pip install matplotlib"
+            )
+
+        except Exception as e:
+
+            messagebox.showerror(
+                "Error",
                 str(e)
             )
+
+
+# -------------------------------------------------------------
+# MAIN PROGRAM
+# -------------------------------------------------------------
 
 if __name__ == "__main__":
 
     root = tk.Tk()
+
     app = SmartExpenseTracker(
         root
     )
+
     root.mainloop()
